@@ -1,21 +1,24 @@
 class Player
-  def play_turn(w)
-    @warrior = w
+  def initialize
     @health = 20
     @captive_location = nil
+  end
+
+  def play_turn(w)
+    @warrior = w
     take_turn
     set_status
   end
 
-  def at_start
-    feel(:backward).wall?
+  def at_start?
+    @warrior.feel(:backward).wall? || @warrior.feel.empty?
   end
 
-  def captive_nearby
-    if feel.captive?
+  def captive_nearby?
+    if @warrior.feel.captive?
       @captive_location = nil
       return true
-    elsif feel.captive?(:backward)
+    elsif @warrior.feel.captive?(:backward)
       @captive_location = :backward
       return true
     else
@@ -23,23 +26,27 @@ class Player
     end
   end
 
-  def fighting
+  def fighting?
     health < @health && !feel.empty?
   end
 
-  def need_rest
+  def need_rest?
     health < 20 && feel.empty?
   end
 
-  def ranged_damage
+  def ranged_damage?
     health < @health && feel.empty?
+  end
+
+  def set_status
+    @health = health
   end
 
   def take_turn
     if !at_start? || ranged_damage?
-      walk!(:backward)
-    elsif captive_nearby?
-      rescue!(@captive_location)
+      @warrior.walk!(:backward)
+    elsif @warrior.captive_nearby?
+      @warrior.rescue!(@captive_location)
     elsif fighting?
       attack!
     elsif need_rest?
@@ -49,7 +56,7 @@ class Player
     end
   end
 
-  def method_missing(w)
+  def method_missing(m)
    @warrior.send(m)
   end
 end
